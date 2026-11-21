@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e1014">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Revlog</title>
+<style>
+:root{--bg:#0e1014;--card:#171a21;--card2:#1f232c;--tx:#eef1f6;--mut:#8b93a3;--ac:#4f8cff;--ok:#34d399;--bad:#ff6b6b;--line:#262b36}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,Roboto,sans-serif}
+body{padding-top:env(safe-area-inset-top)}
+#app{padding:16px 16px calc(88px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto}
+h1{font-size:26px;margin:4px 0 14px}
+h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:22px 0 8px;font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.card.tap{cursor:pointer}
+.live{border-color:var(--ac);background:#14213a}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.mut{color:var(--mut)}
+.small{font-size:12px}
+.big{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:14px;padding:14px 18px;font-size:16px;font-weight:600;width:100%}
+.btn.sec{background:var(--card2);color:var(--tx)}
+.btn.ol{background:transparent;border:1px solid var(--line);color:var(--bad)}
+.btn.sm{padding:10px 14px;font-size:14px;width:auto}
+.ghost,.link,.x{background:none;border:0;color:var(--ac);font-size:14px;padding:6px}
+.x{color:var(--mut);font-size:16px}
+input,select,textarea{background:var(--card2);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:15px;width:100%;font-family:inherit}
+label{display:block;font-size:12px;color:var(--mut);margin:12px 0 4px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(18,21,27,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{flex:1;background:none;border:0;color:var(--mut);padding:10px 0 8px;font-size:11px}
+nav button span{display:block;font-size:20px;line-height:1.1}
+nav button.on{color:var(--ac)}
+.chip{display:inline-block;padding:3px 10px;border-radius:99px;background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);font-weight:600;font-size:12px}
+.dotc{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.pips{display:flex;gap:3px}
+.pips i{width:14px;height:6px;border-radius:3px;background:#2b3140}
+.pips i.on{background:var(--ok)}
+.badge{font-size:11px;padding:2px 8px;border-radius:99px;background:#3a2326;color:var(--bad);font-weight:600}
+.badge.ok{background:#16322a;color:var(--ok)}
+#sessLayer{position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:10;display:none;padding:calc(12px + env(safe-area-inset-top)) 16px 0}
+.sess{max-width:640px;margin:0 auto}
+.timer{font-size:54px;font-weight:700;text-align:center;margin:10px 0 18px;font-variant-numeric:tabular-nums}
+.bar{position:sticky;bottom:0;display:flex;gap:10px;padding:14px 0 calc(14px + env(safe-area-inset-bottom));background:linear-gradient(rgba(14,16,20,0),var(--bg) 35%)}
+.blk{display:grid;grid-template-columns:20px 1.7fr .8fr .7fr .7fr 26px;gap:6px;align-items:center;margin:6px 0}
+.blk.h{font-size:11px;color:var(--mut);margin-bottom:0}
+.blk input,.blk select{padding:8px 6px;font-size:14px}
+.dots{display:flex;gap:8px;margin-top:6px}
+.dot{flex:1;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--tx);font-weight:600;font-size:15px}
+.dot.on{background:var(--ac);border-color:var(--ac)}
+#modal .back{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:flex;align-items:flex-end}
+#modal .sheet{background:var(--card);width:100%;max-width:640px;margin:0 auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+.sheet h3{margin:0 0 6px;font-size:18px}
+.pick{display:block;width:100%;text-align:left;background:var(--card2);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:13px;margin:8px 0;font-size:15px}
+.sw{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.sw button{width:34px;height:34px;border-radius:50%;border:3px solid transparent;background:var(--c)}
+.sw button.on{border-color:#fff}
+.hb{display:grid;grid-template-columns:90px 1fr 54px;gap:8px;align-items:center;margin:8px 0;font-size:13px}
+.hb div.t{height:10px;background:#242936;border-radius:5px;overflow:hidden}
+.hb div.t i{display:block;height:100%;border-radius:5px}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat .card{margin:0;text-align:center}
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#e8ecf4;color:#111;padding:10px 16px;border-radius:99px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+.empty{text-align:center;color:var(--mut);padding:22px 10px}
+.hist-d{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav>
+  <button data-a="nav" data-v="home"><span>🏠</span>Home</button>
+  <button data-a="nav" data-v="history"><span>📜</span>History</button>
+  <button data-a="nav" data-v="library"><span>📚</span>Modules</button>
+  <button data-a="nav" data-v="stats"><span>📊</span>Stats</button>
+</nav>
+<div id="sessLayer"></div>
+<div id="modal"></div>
+<div id="toast"></div>
+<input type="file" id="imp" accept="application/json,.json" style="display:none">
+
+<script>
+"use strict";
+const KEY = 'revlog.v1';
+const METHODS = ['Notes','Flashcards','Past paper','Practice Qs','Reading','Video','Teaching it'];
+const COLORS = ['#4f8cff','#ff6b6b','#34d399','#fbbf24','#a78bfa','#f472b6','#22d3ee','#fb923c'];
+const INT = {1:1,2:2,3:4,4:8,5:16};
+const DAY = 864e5;
+
+function def(){ return {modules:[],topics:[],sessions:[],goalHours:10,active:null}; }
+function load(){
+  try{ const r = localStorage.getItem(KEY); if(r) return Object.assign(def(), JSON.parse(r)); }catch(e){}
+  return def();
+}
+let S = load();
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+let view = 'home', openSess = !!S.active, tmpColor = COLORS[0], tmpConf = 0;
+const expanded = new Set();
+const $ = id => document.getElementById(id);
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-3);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mod = id => S.modules.find(m => m.id === id);
+const topic = id => S.topics.find(t => t.id === id);
+
+/* ---------- dates ---------- */
+const dkey = t => { const d = new Date(t); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const sod = t => { const d = new Date(t); d.setHours(0,0,0,0); return d.getTime(); };
+const addDays = (t,n) => { const d = new Date(t); d.setDate(d.getDate()+n); return d.getTime(); };
+const weekStart = (t=Date.now()) => { const d = new Date(sod(t)); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return d.getTime(); };
+const fmtDur = m => m < 60 ? m+'m' : Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m';
+const clock = ms => { const s = Math.max(0,Math.floor(ms/1000)), h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; const p = n => String(n).padStart(2,'0'); return h ? h+':'+p(m)+':'+p(x) : p(m)+':'+p(x); };
+const dayLabel = t => { const k = dkey(t); if(k===dkey(Date.now())) return 'Today'; if(k===dkey(addDays(Date.now(),-1))) return 'Yesterday'; return new Date(t).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); };
+const minsBetween = (a,b) => S.sessions.filter(s => s.end>=a && s.end<b).reduce((n,s)=>n+s.mins,0);
+
+function streak(){
+  const days = new Set(S.sessions.map(s => dkey(s.end)));
+  let t = sod(Date.now()); if(!days.has(dkey(t))) t = addDays(t,-1);
+  let n = 0; while(days.has(dkey(t))){ n++; t = addDays(t,-1); } return n;
+}
+function bestStreak(){
+  const ds = [...new Set(S.sessions.map(s => sod(s.end)))].sort((a,b)=>a-b);
+  let best = 0, cur = 0, prev = null;
+  for(const d of ds){ cur = (prev!==null && dkey(addDays(prev,1))===dkey(d)) ? cur+1 : 1; best = Math.max(best,cur); prev = d; }
+  return best;
+}
+function dueList(){
+  const now = Date.now();
+  return S.topics.filter(t => t.lastRevised).map(t => {
+    const c = t.confidence || 3, due = addDays(sod(t.lastRevised), INT[c]);
+    return {t, due, od: Math.round((sod(now)-due)/DAY)};
+  }).filter(x => x.due <= now).sort((a,b) => a.due-b.due);
+}
+function examText(m){
+  if(!m.exam) return '';
+  const d = Math.round((new Date(m.exam+'T00:00:00') - sod(Date.now()))/DAY);
+  return d < 0 ? 'Exam passed' : d === 0 ? 'Exam today' : 'Exam in '+d+' day'+(d===1?'':'s');
+}
+function ago(ts){
+  if(!ts) return 'never revised';
+  const d = Math.round((sod(Date.now())-sod(ts))/DAY);
+  return d===0 ? 'revised today' : d===1 ? 'revised yesterday' : 'revised '+d+' days ago';
+}
+
+/* ---------- small ui bits ---------- */
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toast.h); toast.h=setTimeout(()=>t.classList.remove('on'),2200); }
+function modal(html){ $('modal').innerHTML = '<div class="back" data-a="closeModal"><div class="sheet">'+html+'</div></div>'; }
+function closeModal(){ $('modal').innerHTML = ''; }
+const chip = m => m ? '<span class="chip" style="--c:'+m.color+'">'+esc(m.name)+'</span>' : '';
+const pips = c => '<span class="pips">'+[1,2,3,4,5].map(i=>'<i class="'+(i<=c?'on':'')+'"></i>').join('')+'</span>';
+
+function bars(vals, labels, hi){
+  const mx = Math.max(60,...vals), w = 300, h = 100, n = vals.length, bw = w/n;
+  let s = '<svg viewBox="0 -14 300 '+(h+32)+'" width="100%">';
+  vals.forEach((v,i) => {
+    const bh = Math.max(v?3:1, v/mx*h), x = i*bw;
+    s += '<rect x="'+(x+bw*.18)+'" y="'+(h-bh)+'" width="'+(bw*.64)+'" height="'+bh+'" rx="4" fill="'+(i===hi?'#4f8cff':'#2b3140')+'"/>';
+    if(v) s += '<text x="'+(x+bw/2)+'" y="'+(h-bh-4)+'" font-size="9" fill="#8b93a3" text-anchor="middle">'+(v/60).toFixed(1)+'</text>';
+    s += '<text x="'+(x+bw/2)+'" y="'+(h+13)+'" font-size="10" fill="#8b93a3" text-anchor="middle">'+labels[i]+'</text>';
+  });
+  return s + '</svg>';
+}
+function hbars(list){
+  if(!list.length) return '<div class="mut small">Nothing logged yet.</div>';
+  const mx = Math.max(...list.map(x=>x.v));
+  return list.map(x => '<div class="hb"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.l)+'</div><div class="t"><i style="width:'+(x.v/mx*100)+'%;background:'+x.c+'"></i></div><div class="mut" style="text-align:right">'+fmtDur(x.v)+'</div></div>').join('');
+}
+
+/* ---------- views ---------- */
+function home(){
+  const ws = weekStart(), wk = minsBetween(ws, addDays(ws,7)), g = Math.max(1,S.goalHours)*60, pct = Math.min(1,wk/g), C = 2*Math.PI*44;
+  const due = dueList().slice(0,6), recent = S.sessions.slice().sort((a,b)=>b.end-a.end).slice(0,3);
+  let h = '<h1>Revlog</h1>';
+  if(S.active){
+    const m = mod(S.active.moduleId);
+    h += '<div class="card live tap" data-a="resume"><div class="row between"><div><div class="mut small">Session in progress</div><b>'+esc(m?m.name:'Session')+'</b></div><div class="big" id="bannerT">'+clock(Date.now()-S.active.start)+'</div></div></div>';
+  } else {
+    h += '<button class="btn" data-a="start">Start session</button>';
+  }
+  h += '<div class="card row" style="margin-top:12px;gap:16px"><svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="#242936" stroke-width="9"/><circle cx="50" cy="50" r="44" fill="none" stroke="#4f8cff" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+(pct*C)+' '+C+'" transform="rotate(-90 50 50)"/><text x="50" y="55" text-anchor="middle" font-size="18" font-weight="700" fill="#eef1f6">'+Math.round(pct*100)+'%</text></svg>'
+    + '<div><div class="mut small">This week</div><div class="big">'+fmtDur(wk)+'</div><div class="mut small">goal '+S.goalHours+'h</div></div>'
+    + '<div style="margin-left:auto;text-align:right"><div class="big">🔥 '+streak()+'</div><div class="mut small">day streak</div></div></div>';
+  h += '<h2>Due for review</h2>';
+  if(due.length){
+    h += due.map(x => { const m = mod(x.t.moduleId); return '<div class="card tap row between" data-a="startTopic" data-t="'+x.t.id+'"><div class="row"><span class="dotc" style="--c:'+(m?m.color:'#888')+'"></span><div><b>'+esc(x.t.name)+'</b><div class="mut small">'+esc(m?m.name:'')+'</div></div></div><span class="badge">'+(x.od<=0?'due today':x.od+'d overdue')+'</span></div>'; }).join('');
+  } else {
+    h += '<div class="card empty">'+(S.topics.some(t=>t.lastRevised) ? 'Nothing due. Nice.' : 'Topics show up here once you have revised them. Confidence ratings set how soon they come back.')+'</div>';
+  }
+  if(recent.length){
+    h += '<h2>Recent</h2>' + recent.map(s => '<div class="card row between"><div>'+chip({name:s.modName,color:s.color})+'<div class="mut small" style="margin-top:4px">'+dayLabel(s.end)+'</div></div><b>'+fmtDur(s.mins)+'</b></div>').join('');
+  }
+  return h;
+}
+
+function history(){
+  const list = S.sessions.slice().sort((a,b)=>b.end-a.end);
+  if(!list.length) return '<h1>History</h1><div class="card empty">No sessions yet. Go revise something.</div>';
+  let h = '<h1>History</h1>', last = '';
+  list.forEach(s => {
+    const dl = dayLabel(s.end);
+    if(dl !== last){ h += '<h2>'+dl+'</h2>'; last = dl; }
+    const open = expanded.has(s.id);
+    const qs = s.entries.reduce((n,e)=>n+e.blocks.reduce((a,b)=>a+(b.qs||0),0),0);
+    const ok = s.entries.reduce((n,e)=>n+e.blocks.reduce((a,b)=>a+Math.min(b.ok||0,b.qs||0),0),0);
+    h += '<div class="card tap" data-a="toggleHist" data-s="'+s.id+'"><div class="row between"><div>'+chip({name:s.modName,color:s.color})+'<div class="mut small" style="margin-top:4px">'+s.entries.length+' topic'+(s.entries.length===1?'':'s')+(qs?' · '+ok+'/'+qs+' Qs':'')+'</div></div><b>'+fmtDur(s.mins)+'</b></div>';
+    if(open){
+      h += s.entries.map(e => '<div style="margin-top:10px"><b>'+esc(e.name)+'</b>'+(e.conf?' <span class="mut small">confidence '+e.conf+'/5</span>':'')+e.blocks.map(b => '<div class="mut small">'+esc(b.method)+' · '+b.mins+'m'+(b.qs?' · '+(b.ok||0)+'/'+b.qs+' right':'')+'</div>').join('')+'</div>').join('');
+      if(s.note) h += '<div style="margin-top:10px" class="mut small">“'+esc(s.note)+'”</div>';
+      h += '<div style="margin-top:10px"><button class="x" data-a="delSess" data-s="'+s.id+'">Delete session</button></div>';
+    }
+    h += '</div>';
+  });
+  return h;
+}
+
+function library(){
+  let h = '<div class="row between"><h1>Modules</h1><button class="btn sm" data-a="addMod">+ Module</button></div>';
+  if(!S.modules.length) return h + '<div class="card empty">Add your modules first (e.g. Financial Reporting), then add topics under each one.</div>';
+  S.modules.forEach(m => {
+    const ts = S.topics.filter(t => t.moduleId === m.id), rated = ts.filter(t => t.confidence);
+    const avg = rated.length ? (rated.reduce((n,t)=>n+t.confidence,0)/rated.length).toFixed(1) : '-';
+    h += '<div class="card"><div class="row between"><div class="row"><span class="dotc" style="--c:'+m.color+'"></span><b style="font-size:17px">'+esc(m.name)+'</b></div><button class="ghost" data-a="editMod" data-m="'+m.id+'">Edit</button></div>'
+      + '<div class="mut small" style="margin:4px 0 8px">'+ts.length+' topics · avg confidence '+avg+(m.exam?' · '+examText(m):'')+'</div>';
+    h += ts.map(t => {
+      const d = dueList().find(x => x.t.id === t.id);
+      return '<div class="row between tap" style="padding:9px 0;border-top:1px solid var(--line)" data-a="editTopic" data-t="'+t.id+'"><div><div>'+esc(t.name)+'</div><div class="mut small">'+ago(t.lastRevised)+'</div></div><div class="row">'+(d?'<span class="badge">due</span>':'')+pips(t.confidence||0)+'</div></div>';
+    }).join('');
+    h += '<button class="link" data-a="addTopicLib" data-m="'+m.id+'">+ Add topic</button></div>';
+  });
+  return h;
+}
+
+function stats(){
+  const today = sod(Date.now()), d7 = [], l7 = [];
+  for(let i=6;i>=0;i--){ const t = addDays(today,-i); d7.push(minsBetween(t,addDays(t,1))); l7.push('SMTWTFS'[new Date(t).getDay()]); }
+  const w8 = [], wl = [];
+  for(let k=7;k>=0;k--){ const a = addDays(weekStart(),-7*k); w8.push(minsBetween(a,addDays(a,7))); wl.push(new Date(a).getDate()+'/'+(new Date(a).getMonth()+1)); }
+  const cut = addDays(today,-29), byMod = {};
+  S.sessions.filter(s => s.end>=cut).forEach(s => { (byMod[s.modName] = byMod[s.modName] || {v:0,c:s.color}).v += s.mins; });
+  const modList = Object.entries(byMod).map(([l,o])=>({l,v:o.v,c:o.c})).sort((a,b)=>b.v-a.v);
+  const byMeth = {}; let qs = 0, ok = 0;
+  S.sessions.forEach(s => s.entries.forEach(e => e.blocks.forEach(b => { byMeth[b.method] = (byMeth[b.method]||0) + b.mins; qs += b.qs||0; ok += Math.min(b.ok||0,b.qs||0); })));
+  const methList = Object.entries(byMeth).filter(x=>x[1]>0).map(([l,v])=>({l,v,c:'#a78bfa'})).sort((a,b)=>b.v-a.v);
+  const total = S.sessions.reduce((n,s)=>n+s.mins,0), longest = S.sessions.reduce((n,s)=>Math.max(n,s.mins),0), bestWk = (() => {
+    const m = {}; S.sessions.forEach(s => { const k = weekStart(s.end); m[k] = (m[k]||0)+s.mins; }); return Math.max(0,...Object.values(m));
+  })();
+  let h = '<h1>Stats</h1><div class="card"><div class="mut small">Last 7 days (hours)</div>'+bars(d7,l7,6)+'</div>'
+    + '<div class="card"><div class="mut small">Last 8 weeks (hours, week starting)</div>'+bars(w8,wl,7)+'</div>'
+    + '<h2>Records</h2><div class="stat">'
+    + '<div class="card"><div class="big">'+fmtDur(total)+'</div><div class="mut small">total time</div></div>'
+    + '<div class="card"><div class="big">'+S.sessions.length+'</div><div class="mut small">sessions</div></div>'
+    + '<div class="card"><div class="big">'+fmtDur(longest)+'</div><div class="mut small">longest session</div></div>'
+    + '<div class="card"><div class="big">'+fmtDur(bestWk)+'</div><div class="mut small">best week</div></div>'
+    + '<div class="card"><div class="big">'+bestStreak()+'</div><div class="mut small">best streak (days)</div></div>'
+    + '<div class="card"><div class="big">'+(qs?Math.round(ok/qs*100)+'%':'-')+'</div><div class="mut small">question accuracy</div></div></div>'
+    + '<h2>By module, last 30 days</h2><div class="card">'+hbars(modList)+'</div>'
+    + '<h2>By method, all time</h2><div class="card">'+hbars(methList)+'</div>'
+    + '<h2>Settings</h2><div class="card"><label style="margin-top:0">Weekly goal (hours)</label><input type="number" inputmode="decimal" min="1" value="'+S.goalHours+'" data-c="goal">'
+    + '<div class="row" style="margin-top:14px"><button class="btn sec sm" data-a="exportData" style="flex:1">Export backup</button><button class="btn sec sm" data-a="importData" style="flex:1">Import backup</button></div>'
+    + '<div class="mut small" style="margin-top:10px">Data lives on this phone only. Export a backup now and then, because clearing browser data wipes it.</div>'
+    + '<button class="btn ol" style="margin-top:14px" data-a="resetAll">Delete everything</button></div>';
+  return h;
+}
+
+/* ---------- session screen ---------- */
+function entryHtml(e,i){
+  const t = topic(e.topicId);
+  return '<div class="card"><div class="row between"><b>'+esc(t?t.name:e.name)+'</b><button class="x" data-a="delEntry" data-i="'+i+'">✕</button></div>'
+    + '<div class="blk h"><span></span><span>Method</span><span>Mins</span><span>Qs</span><span>Right</span><span></span></div>'
+    + e.blocks.map((b,j) => '<div class="blk"><span class="mut small">'+(j+1)+'</span>'
+      + '<select data-c="bm" data-i="'+i+'" data-j="'+j+'">'+METHODS.map(x=>'<option'+(x===b.method?' selected':'')+'>'+x+'</option>').join('')+'</select>'
+      + '<input type="number" inputmode="numeric" min="0" value="'+b.mins+'" data-c="bmin" data-i="'+i+'" data-j="'+j+'">'
+      + '<input type="number" inputmode="numeric" min="0" placeholder="-" value="'+(b.qs==null?'':b.qs)+'" data-c="bqs" data-i="'+i+'" data-j="'+j+'">'
+      + '<input type="number" inputmode="numeric" min="0" placeholder="-" value="'+(b.ok==null?'':b.ok)+'" data-c="bok" data-i="'+i+'" data-j="'+j+'">'
+      + '<button class="x" data-a="delBlock" data-i="'+i+'" data-j="'+j+'">✕</button></div>').join('')
+    + '<button class="link" data-a="addBlock" data-i="'+i+'">+ Add block</button>'
+    + '<div class="mut small" style="margin-top:8px">How solid does it feel now?</div><div class="dots">'+[1,2,3,4,5].map(v=>'<button class="dot'+(e.conf===v?' on':'')+'" data-a="setConf" data-i="'+i+'" data-v="'+v+'">'+v+'</button>').join('')+'</div></div>';
+}
+function sessionScreen(){
+  const a = S.active, m = mod(a.moduleId);
+  return '<div class="sess"><div class="row between"><button class="ghost" data-a="closeSess">⌄ Minimise</button>'+chip(m)+'</div>'
+    + '<div class="timer" id="timer">'+clock(Date.now()-a.start)+'</div>'
+    + (a.entries.length ? a.entries.map(entryHtml).join('') : '<div class="card empty">Add the topics you are revising. Blocks are like sets: one method, some minutes, optional question score.</div>')
+    + '<button class="btn sec" data-a="addTopic">+ Add topic</button>'
+    + '<div class="bar"><button class="btn ol" data-a="discard" style="flex:1">Discard</button><button class="btn" data-a="finish" style="flex:2">Finish</button></div></div>';
+}
+
+/* ---------- render ---------- */
+function render(){
+  $('app').innerHTML = ({home,history,library,stats}[view])();
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
+  const L = $('sessLayer');
+  if(S.active && openSess){ const st = L.scrollTop; L.innerHTML = sessionScreen(); L.style.display = 'block'; L.scrollTop = st; }
+  else { L.style.display = 'none'; L.innerHTML = ''; }
+}
+setInterval(() => {
+  if(!S.active) return;
+  const t = $('timer'), b = $('bannerT'), c = clock(Date.now()-S.active.start);
+  if(t) t.textContent = c; if(b) b.textContent = c;
+}, 1000);
+
+/* ---------- actions ---------- */
+function startSession(moduleId, topicId){
+  S.active = {start:Date.now(), moduleId, entries:[]};
+  if(topicId) addEntry(topicId);
+  openSess = true; save(); closeModal(); render();
+}
+function addEntry(topicId){
+  if(S.active.entries.some(e => e.topicId === topicId)) return;
+  S.active.entries.push({topicId, name:(topic(topicId)||{}).name||'', blocks:[], conf:0});
+  addBlockTo(S.active.entries.length-1);
+}
+function addBlockTo(i){
+  const e = S.active.entries[i], lastM = e.blocks.length ? e.blocks[e.blocks.length-1].method : 'Notes';
+  e.blocks.push({method:lastM, mins:25, qs:null, ok:null});
+}
+function pickModal(){
+  if(!S.modules.length){ view = 'library'; render(); toast('Add a module first'); return; }
+  modal('<h3>Which module?</h3>'+S.modules.map(m=>'<button class="pick" data-a="pickMod" data-m="'+m.id+'"><span class="dotc" style="--c:'+m.color+';display:inline-block;margin-right:8px"></span>'+esc(m.name)+'</button>').join(''));
+}
+function saveSession(){
+  const a = S.active, end = Date.now(), m = mod(a.moduleId);
+  const mins = Math.max(1, Math.round(+$('fm').value || 1)), note = $('fn').value.trim();
+  const entries = a.entries.map(e => ({topicId:e.topicId, name:(topic(e.topicId)||{}).name||e.name, blocks:e.blocks, conf:e.conf}));
+  a.entries.forEach(e => { const t = topic(e.topicId); if(t){ t.lastRevised = end; if(e.conf) t.confidence = e.conf; } });
+  S.sessions.push({id:uid(), start:a.start, end, mins, moduleId:a.moduleId, modName:m?m.name:'Session', color:m?m.color:'#888', entries, note});
+  S.active = null; openSess = false; save(); closeModal(); render(); toast('Saved. '+fmtDur(mins));
+}
+function modForm(m){
+  tmpColor = m ? m.color : COLORS[S.modules.length % COLORS.length];
+  modal('<h3>'+(m?'Edit module':'New module')+'</h3><label>Name</label><input id="mn" value="'+esc(m?m.name:'')+'" placeholder="e.g. Financial Reporting"><label>Exam date (optional)</label><input id="mx" type="date" value="'+esc(m?m.exam:'')+'"><label>Colour</label><div class="sw">'+COLORS.map(c=>'<button class="'+(c===tmpColor?'on':'')+'" style="--c:'+c+'" data-a="pickColor" data-col="'+c+'"></button>').join('')+'</div>'
+    + '<button class="btn" style="margin-top:18px" data-a="saveMod" data-m="'+(m?m.id:'')+'">Save</button>'
+    + (m?'<button class="btn ol" style="margin-top:10px" data-a="delMod" data-m="'+m.id+'">Delete module and its topics</button>':''));
+}
+
+const actions = {
+  nav(d){ view = d.v; render(); window.scrollTo(0,0); },
+  start(){ pickModal(); },
+  pickMod(d){ startSession(d.m); },
+  resume(){ openSess = true; render(); },
+  closeSess(){ openSess = false; render(); },
+  startTopic(d){
+    const t = topic(d.t); if(!t) return;
+    if(S.active){
+      if(S.active.moduleId !== t.moduleId){ toast('Finish your current session first'); return; }
+      addEntry(t.id); openSess = true; save(); render();
+    } else startSession(t.moduleId, t.id);
+  },
+  addTopic(){
+    const a = S.active, avail = S.topics.filter(t => t.moduleId === a.moduleId && !a.entries.some(e => e.topicId === t.id));
+    modal('<h3>Add topic</h3>'+avail.map(t=>'<button class="pick" data-a="pickTopic" data-t="'+t.id+'">'+esc(t.name)+'</button>').join('')+'<label>Or create a new one</label><input id="ntn" placeholder="Topic name"><button class="btn" style="margin-top:12px" data-a="newTopicS">Create and add</button>');
+  },
+  pickTopic(d){ addEntry(d.t); save(); closeModal(); render(); },
+  newTopicS(){
+    const n = $('ntn').value.trim(); if(!n) return;
+    const t = {id:uid(), moduleId:S.active.moduleId, name:n, lastRevised:null, confidence:0};
+    S.topics.push(t); addEntry(t.id); save(); closeModal(); render();
+  },
+  delEntry(d){ S.active.entries.splice(+d.i,1); save(); render(); },
+  addBlock(d){ addBlockTo(+d.i); save(); render(); },
+  delBlock(d){ S.active.entries[+d.i].blocks.splice(+d.j,1); save(); render(); },
+  setConf(d){ const e = S.active.entries[+d.i]; e.conf = e.conf === +d.v ? 0 : +d.v; save(); render(); },
+  finish(){
+    const mins = Math.max(1, Math.round((Date.now()-S.active.start)/60000));
+    modal('<h3>Finish session</h3><label>Total minutes (edit if you forgot to stop the timer)</label><input id="fm" type="number" inputmode="numeric" value="'+mins+'"><label>Note (optional)</label><textarea id="fn" rows="3" placeholder="What clicked, what did not"></textarea><button class="btn" style="margin-top:16px" data-a="saveSess">Save session</button>');
+  },
+  saveSess(){ saveSession(); },
+  discard(){ if(confirm('Discard this session?')){ S.active = null; openSess = false; save(); render(); } },
+  toggleHist(d){ expanded.has(d.s) ? expanded.delete(d.s) : expanded.add(d.s); render(); },
+  delSess(d){ if(confirm('Delete this session?')){ S.sessions = S.sessions.filter(s => s.id !== d.s); save(); render(); } },
+  addMod(){ modForm(null); },
+  editMod(d){ modForm(mod(d.m)); },
+  pickColor(d, e){ tmpColor = d.col; document.querySelectorAll('.sw button').forEach(b => b.classList.toggle('on', b === e.target.closest('button'))); },
+  saveMod(d){
+    const n = $('mn').value.trim(); if(!n){ toast('Name it first'); return; }
+    if(d.m){ const m = mod(d.m); m.name = n; m.exam = $('mx').value; m.color = tmpColor; }
+    else S.modules.push({id:uid(), name:n, color:tmpColor, exam:$('mx').value});
+    save(); closeModal(); render();
+  },
+  delMod(d){
+    if(confirm('Delete this module and all its topics? Past sessions stay in History.')){
+      S.modules = S.modules.filter(m => m.id !== d.m); S.topics = S.topics.filter(t => t.moduleId !== d.m); save(); closeModal(); render();
+    }
+  },
+  addTopicLib(d){ modal('<h3>New topic</h3><input id="ntn" placeholder="e.g. Lease accounting"><button class="btn" style="margin-top:14px" data-a="saveTopic" data-m="'+d.m+'">Add</button>'); },
+  saveTopic(d){
+    const n = $('ntn').value.trim(); if(!n) return;
+    S.topics.push({id:uid(), moduleId:d.m, name:n, lastRevised:null, confidence:0}); save(); closeModal(); render();
+  },
+  editTopic(d){
+    const t = topic(d.t); tmpConf = t.confidence || 0;
+    modal('<h3>Edit topic</h3><label>Name</label><input id="tn" value="'+esc(t.name)+'"><label>Confidence</label><div class="dots">'+[1,2,3,4,5].map(v=>'<button class="dot'+(v===tmpConf?' on':'')+'" data-a="tconf" data-v="'+v+'">'+v+'</button>').join('')+'</div><button class="btn" style="margin-top:18px" data-a="saveTopicEdit" data-t="'+t.id+'">Save</button><button class="btn ol" style="margin-top:10px" data-a="delTopic" data-t="'+t.id+'">Delete topic</button>');
+  },
+  tconf(d, e){ tmpConf = +d.v; document.querySelectorAll('#modal .dot').forEach(b => b.classList.toggle('on', b === e.target.closest('button'))); },
+  saveTopicEdit(d){ const t = topic(d.t), n = $('tn').value.trim(); if(n) t.name = n; t.confidence = tmpConf; save(); closeModal(); render(); },
+  delTopic(d){ if(confirm('Delete this topic?')){ S.topics = S.topics.filter(t => t.id !== d.t); save(); closeModal(); render(); } },
+  exportData(){
+    const b = new Blob([JSON.stringify(S,null,1)], {type:'application/json'}), a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = 'revlog-backup-'+dkey(Date.now())+'.json'; document.body.appendChild(a); a.click(); a.remove();
+  },
+  importData(){ $('imp').click(); },
+  resetAll(){ if(confirm('Delete ALL data on this phone? Export a backup first if unsure.')){ S = def(); openSess = false; save(); render(); } },
+  closeModal(){ closeModal(); }
+};
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]'); if(!b) return;
+  if(b.dataset.a === 'closeModal' && e.target !== b) return;
+  const f = actions[b.dataset.a]; if(f) f(b.dataset, e);
+});
+document.addEventListener('change', e => {
+  const t = e.target, c = t.dataset && t.dataset.c; if(!c) return;
+  if(c === 'goal'){ S.goalHours = Math.max(1, +t.value || 10); save(); render(); return; }
+  if(c === 'import'){ return; }
+  const en = S.active && S.active.entries[+t.dataset.i], b = en && en.blocks[+t.dataset.j]; if(!b) return;
+  if(c === 'bm') b.method = t.value;
+  if(c === 'bmin') b.mins = Math.max(0, Math.round(+t.value || 0));
+  if(c === 'bqs') b.qs = t.value === '' ? null : Math.max(0, Math.round(+t.value));
+  if(c === 'bok') b.ok = t.value === '' ? null : Math.max(0, Math.round(+t.value));
+  save();
+});
+$('imp').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const d = JSON.parse(r.result);
+      if(!Array.isArray(d.modules) || !Array.isArray(d.sessions)) throw 0;
+      if(confirm('Replace everything on this phone with this backup?')){ S = Object.assign(def(), d); openSess = !!S.active; save(); render(); toast('Backup restored'); }
+    }catch(x){ toast('That file is not a Revlog backup'); }
+    e.target.value = '';
+  };
+  r.readAsText(f);
+});
+
+render();
+try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
